@@ -1,0 +1,17 @@
+{
+  "name": "cert_demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "asp --nologo",
+    "build": "asb --target dev_build",
+    "build:release": "asb"
+  },
+  "author": "jasontduncan@gmail.com",
+  "license": "ISC",
+  "devDependencies": {
+    "@as-pect/cli": "^6.2.4",
+    "near-sdk-as": "^3.2.3"
+  }
+}
