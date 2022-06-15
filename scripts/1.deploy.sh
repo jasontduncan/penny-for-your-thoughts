@@ -19,7 +19,7 @@ echo
 echo
 echo "Update the \$CONTRACT environment variable:"
 echo "export CONTRACT=dev-xxxxxxxxxxx-xxxxxxxxx listed as 'Account id:', above"
-echo
+echo WINDOWS USERS: Use 'SET' instead of export.
 echo
 echo "Then try: ./scripts/2.shareThough.sh \"Whatever's on your mind\""
 echo

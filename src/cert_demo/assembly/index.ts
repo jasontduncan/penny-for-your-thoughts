@@ -90,7 +90,7 @@ export class Contract {
         const total = u128.add(amount, this.piggyBank.amount)
         assert(u128.le(amount, MAX_PENNY_VALUE), "Too many pennies for this piggy bank. Try a lower amount")
         assert(u128.le(total, MAX_PENNY_VALUE), "No more room in the piggy bank.")
-        assert(u128.gt(amount, u128.Zero), "Negative penny amounts not allowed.")
+        assert(u128.ge(amount, u128.Zero), "Negative penny amounts not allowed.")
     }
 
     private assertThinker(): void {
