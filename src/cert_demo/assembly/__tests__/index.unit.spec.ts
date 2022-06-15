@@ -1,9 +1,10 @@
 import {VMContext, u128, PersistentVector, Context} from "near-sdk-as"
-import {ONE_NEAR} from "../../../utils"
+import {ONE_NEAR, MIN_ACCOUNT_BALANCE} from "../../../utils"
 import * as App from "../index"
 import * as Models from "../models"
 
 const VALID_THOUGHT = "Here's a thought",
+    VALID_DEPOSIT = u128.from(1),
     THINKER = 'thinker',
     JOURNAL = new PersistentVector<Models.Thought>("t")
 
@@ -11,8 +12,10 @@ const VALID_THOUGHT = "Here's a thought",
 
     describe("Contract", () => {
         beforeEach(() => {
-            const pb = new Models.PiggyBank()
-            pb.deposit(u128.mul(ONE_NEAR, u128.from(5)))
+            const pb = new Models.PiggyBank(),
+            initialDeposit = MIN_ACCOUNT_BALANCE
+
+            VMContext.setAttached_deposit(initialDeposit)
             contract = new App.Contract(THINKER, JOURNAL, pb)
         })
         describe("#shareThought()", () => {
@@ -39,7 +42,18 @@ const VALID_THOUGHT = "Here's a thought",
                                 const emptyThought = ""
                                 VMContext.setSigner_account_id(THINKER)
                                 contract.shareThought(emptyThought)
-                            })
+                            }).toThrow()
+                        })
+                    })
+                })
+                describe("Invalid deposit", () => {
+                    describe("deposit is too big", () => {
+                        it("should throw", () => {
+                            expect(() => {
+                                // Negative number will wrap to max unsigned
+                                VMContext.setAttached_deposit(u128.from(-1))
+                                contract.shareThought(VALID_THOUGHT)
+                            }).toThrow()
                         })
                     })
                 })
@@ -89,16 +103,67 @@ const VALID_THOUGHT = "Here's a thought",
                 })
             })
         })
-        describe("#breakBank", () => {
-            // This test cannot be performed with as-pect, sadly.
-            xit("should add the deposited value to the thinker's account balance", () => {
-                VMContext.setSigner_account_id(THINKER)
-                VMContext.setAccount_balance(u128.mul(ONE_NEAR, u128.from(22)))
-            
-                const startBal: u128 = Context.accountBalance
+        describe("#givePenny", () => {
+            describe("Invalid deposit", () =>{
+                describe("Deposit too big", () => {
+                    beforeEach(() => {
+                        // Negative values wrap to large unsigned values
+                        VMContext.setAttached_deposit(u128.from(-1))
+                    })
+                    it("should throw", () => {
+                        expect(() => {
+                            contract.givePenny()
+                        }).toThrow()
+                    })
+                })
+            })
+            describe("Valid deposit", () => {
+                beforeEach(() => {
+                    VMContext.setAttached_deposit(VALID_DEPOSIT)
+                })
+                it("should add the deposit to the piggybank", () => {
+                    const initialBalance = contract.piggyBank.amount
+                    
+                    contract.givePenny()
 
-                contract.breakBank()
-                expect(Context.accountBalance).toBe(startBal)
+                    expect(contract.piggyBank.amount).toBe(initialBalance + VALID_DEPOSIT)
+                })
+            })
+        })
+        describe("#breakBank", () => {
+            describe("Valid caller", () => {
+                beforeEach(() => {
+                    VMContext.setSigner_account_id(THINKER)
+                })
+                describe("Balance too low", () => {
+                    it("should throw", () => {
+                        expect(() => {
+                            contract.breakBank()
+                        }).toThrow()
+                    })
+                })
+                describe("Valid balance", () => {
+                    beforeEach(() => {
+                        VMContext.setAttached_deposit(VALID_DEPOSIT)
+                        contract.givePenny()
+                    })
+
+                    it("should set the piggybank balance to the minimum", () => {
+                        contract.breakBank()
+                     
+                        expect(contract.piggyBank.amount).toBe(u128.Zero)
+                    })
+                })
+                // This test cannot be performed with as-pect, sadly.
+                xit("should add the deposited value to the thinker's account balance", () => {
+                    VMContext.setSigner_account_id(THINKER)
+                    VMContext.setAccount_balance(u128.mul(ONE_NEAR, u128.from(22)))
+
+                    const startBal: u128 = Context.accountBalance
+
+                    contract.breakBank()
+                    expect(Context.accountBalance).toBe(startBal)
+                })
             })
         })
     })

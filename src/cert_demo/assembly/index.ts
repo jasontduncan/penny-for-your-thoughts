@@ -1,5 +1,5 @@
 import {logging, Context, u128, PersistentVector, ContractPromiseBatch} from "near-sdk-core"
-import { AccountId, ONE_NEAR, XCC_GAS, assert_self, assert_single_promise_success} from "../../utils"
+import { AccountId, ONE_NEAR, XCC_GAS, MIN_ACCOUNT_BALANCE, assert_self, assert_single_promise_success} from "../../utils"
 import {Thought, PiggyBank} from "./models"
 
 const MAX_PENNY_VALUE: u128 = u128.mul(ONE_NEAR, u128.from(15))
@@ -35,17 +35,21 @@ export class Contract {
         return true
     }
 
+    @mutateState
     breakBank(): void {
         this.assertThinker()
 
+        // Have to leave something in the bank for storage staking
         assert(this.piggyBank.amount > u128.Zero, "There's nothing in the bank.")
-
+        
         const theContract = Context.contractName,
             theThinker = ContractPromiseBatch.create(this.thinker)
         
         // Do the thing
         theThinker.transfer(this.piggyBank.amount)
         .then(theContract).function_call("onTransferComplete", "{}", u128.Zero, XCC_GAS)
+
+        this.piggyBank.refresh()
     }
 
     @mutateState()
@@ -54,8 +58,7 @@ export class Contract {
         assert_single_promise_success()
 
         logging.log("Transfer completed")
-        this.piggyBank.refresh()
-
+        //this.piggyBank.refresh()
     }
 
     readThoughts(): Thought[] {
@@ -67,11 +70,21 @@ export class Contract {
         return thoughts
     }
 
+    @mutateState
+    givePenny(): void {
+        const pennies = Context.attachedDeposit
+
+        this.assertPennyLimit(pennies)
+
+        this.piggyBank.deposit(pennies)        
+    }
+
     //Internal
     private assertPennyLimit(amount: u128): void {
         const total = u128.add(amount, this.piggyBank.amount)
         assert(u128.le(amount, MAX_PENNY_VALUE), "Too many pennies for this piggy bank. Try a lower amount")
         assert(u128.le(total, MAX_PENNY_VALUE), "No more room in the piggy bank.")
+        assert(u128.gt(amount, u128.Zero), "Negative penny amounts not allowed.")
     }
 
     private assertThinker(): void {

@@ -1,4 +1,4 @@
-# PFYT Micro-blog
+# Penny For Your Thoughts Micro-blog
 
 This is a micro-blogging app that stores author's micro-blogs, or 'thoughts', on the blockchain. The content is, therefore, resistant to tampering and censorship.
 
@@ -22,4 +22,6 @@ This is a micro-blogging app that stores author's micro-blogs, or 'thoughts', on
 2. `2.shareThought.sh` posts a new thought to `$CONTRACT` with identity `$OWNER`. Will fail if $OWNER doesn't own `$CONTRACT`.
   - eg. `./scripts/2.shareThought.sh "Here's a thought..."`
 3. `3.readThoughts.sh` returns all thoughts posted to the specified contract.
-  - eg. `./scripts/3.readThoughts dev-xxxxxxxx-xxxxxxx`
+  - eg. `./scripts/3.readThoughts.sh dev-xxxxxxxx-xxxxxxx`
+4. `4.givePenny.sh` transfers the specified amount of Near from the `$OWNER` to the `$CONTRACT`
+  - eg. `./scripts4.givePenny.sh 2`
