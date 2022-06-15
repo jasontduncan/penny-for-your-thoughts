@@ -1,6 +1,8 @@
 # Penny For Your Thoughts Micro-blog
 
 This is a micro-blogging app that stores author's micro-blogs, or 'thoughts', on the blockchain. The content is, therefore, resistant to tampering and censorship.
+### IMPORTANT! This repo is for demonstration purposes only. It is not intended for use in a production environment!!!
+
 
 ## Usage
 
