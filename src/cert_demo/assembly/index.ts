@@ -30,7 +30,7 @@ export class Contract {
         //Put deposit in the piggyBank
         this.piggyBank.deposit(deposit)
         //Add the thought to the journal
-        this.journal.pushBack(new Thought(thought))
+        this.journal.push(new Thought(thought))
 
         return true
     }
@@ -61,9 +61,15 @@ export class Contract {
         //this.piggyBank.refresh()
     }
 
-    readThoughts(): Thought[] {
-        const thoughts: Thought[] = []
-        for(let i=0; i<this.journal.length; i++) {
+    /*
+     * I wouldn't normally use signed ints for args that have no meaningful negative values, but PersistentVector.length returns i32.
+     * When in Rome...
+     */
+    readThoughts(count: i32=10, skip: i32=0): Thought[] {
+        const thoughts: Thought[] = [],
+            fetchLimit: i32 = this.journal.length < count ? this.journal.length : count
+
+        for(let i=(this.journal.length-1)-skip; i>=(this.journal.length-skip)-fetchLimit; i--) {
             thoughts.push(this.journal[i])
         }
 

@@ -82,24 +82,68 @@ const VALID_THOUGHT = "Here's a thought",
                 // Unique values are less prone to false positives.
                 contract.shareThought(VALID_THOUGHT)
             })
-            describe("Caller is not the thinker", () =>{
-                beforeEach(() => {
-                    // Set the context
-                    VMContext.setSigner_account_id('notTheThinker')
+            it("should return the thoughts in reverse chronological order", () => {
+                const secondThought = "On second thought..."
+                contract.shareThought(secondThought)
+
+                const thoughts = contract.readThoughts()
+
+                expect(thoughts[0].text).toBe(secondThought)
+            })
+            describe("Context differences", () => {
+                describe("Caller is not the thinker", () =>{
+                    beforeEach(() => {
+                        // Set the context
+                        VMContext.setSigner_account_id('notTheThinker')
+                    })
+                    afterEach(() => {
+                        // Clean up the context
+                        VMContext.setSigner_account_id(THINKER)
+                    })
+                    it("should return the thoughts", () => {
+                        const thoughts = contract.readThoughts()
+                        expect(thoughts[0].text).toBe(VALID_THOUGHT)
+                    })
                 })
-                afterEach(() => {
-                    // Clean up the context
-                    VMContext.setSigner_account_id(THINKER)
-                })
-                it("should return the thoughts", () => {
-                    const thoughts = contract.readThoughts()
-                    expect(thoughts.length).toBe(1)
+                describe("Caller is the thinker", () => {
+                    it("should return the thoughts", () => {
+                        const thoughts = contract.readThoughts()
+                        expect(thoughts[0].text).toBe(VALID_THOUGHT)
+                    })
                 })
             })
-            describe("Caller is the thinker", () => {
-                it("should return the thoughts", () => {
-                    const thoughts = contract.readThoughts()
-                    expect(thoughts[0].text).toBe(VALID_THOUGHT)
+            describe("Call arguments", () => {
+                beforeEach(() => {
+                    //Publish multiple thoughts
+                    for(let i=1; i<=20; i++) {
+                        // Pay for storage
+                        VMContext.setAttached_deposit(u128.from(3))
+                        contract.shareThought("Thought"+i.toString())
+                    }
+                })
+                describe("No args", () => {
+                    it("should return 10 thoughts", () => {
+                        const thoughts = contract.readThoughts()
+                        expect(thoughts.length).toBe(10)
+                    })
+                })
+                describe("Optional args", () => {
+                    describe("Called with 'count'", () => {
+                        it("should return the desired number of thoughts", () => {
+                            const desiredCount = 5,
+                                thoughts = contract.readThoughts(desiredCount)
+
+                            expect(thoughts.length).toBe(desiredCount)
+                        })
+                    })
+                    describe("Called with 'skip'", () => {
+                        it("should skip the desired number of thoughts, returning the next ones", () => {
+                            const desiredSkip = 10,
+                                thoughts = contract.readThoughts(10, desiredSkip)
+
+                            expect(thoughts[0].text).toBe("Thought10")
+                        })
+                    })
                 })
             })
         })
@@ -123,7 +167,7 @@ const VALID_THOUGHT = "Here's a thought",
                 })
                 it("should add the deposit to the piggybank", () => {
                     const initialBalance = contract.piggyBank.amount
-                    
+
                     contract.givePenny()
 
                     expect(contract.piggyBank.amount).toBe(initialBalance + VALID_DEPOSIT)
@@ -150,7 +194,7 @@ const VALID_THOUGHT = "Here's a thought",
 
                     it("should set the piggybank balance to the minimum", () => {
                         contract.breakBank()
-                     
+
                         expect(contract.piggyBank.amount).toBe(u128.Zero)
                     })
                 })

@@ -21,6 +21,7 @@ This is a micro-blogging app that stores author's micro-blogs, or 'thoughts', on
 1. `1.deploy.sh` deletes any existing account under `$CONTRACT.$OWNER` and calls `dev-deploy`.
 2. `2.shareThought.sh` posts a new thought to `$CONTRACT` with identity `$OWNER`. Will fail if $OWNER doesn't own `$CONTRACT`.
   - eg. `./scripts/2.shareThought.sh "Here's a thought..."`
+  - eg. ... or with optional deposit (in NEAR) for storage staking `./scripts/2.shareThought.sh "I was just thinking about cheese." 2`
 3. `3.readThoughts.sh` returns all thoughts posted to the specified contract.
   - eg. `./scripts/3.readThoughts.sh dev-xxxxxxxx-xxxxxxx`
 4. `4.givePenny.sh` transfers the specified amount of Near from the `$OWNER` to the `$CONTRACT`
